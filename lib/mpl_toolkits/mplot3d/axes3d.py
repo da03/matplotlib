@@ -72,7 +72,7 @@ class Axes3D(Axes):
         force_zorder : bool, optional
             Force use of each collection and patch's zorder to determine
             draw order. If this option is True, automatic draw order is
-            completey disabled. Defaults to to False.
+            completely disabled. Defaults to False.
         Notes
         -----
         .. versionadded:: 1.2.1
