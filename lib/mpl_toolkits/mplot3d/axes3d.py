@@ -51,7 +51,8 @@ class Axes3D(Axes):
 
     def __init__(
             self, fig, rect=None, *args,
-            azim=-60, elev=30, sharez=None, proj_type='persp',
+            azim=-60, elev=30, zscale=None, sharez=None, proj_type='persp',
+            force_zorder=False,
             **kwargs):
         """
         Parameters
@@ -72,11 +73,17 @@ class Axes3D(Axes):
             Other optional keyword arguments:
 
             %(Axes3D)s
+        force_zorder : bool, optional
+            Force use of each collection and patch's zorder to determine
+            draw order. If this option is True, automatic draw order is
+            completely disabled. Defaults to False.
 
         Notes
         -----
         .. versionadded:: 1.2.1
             The *sharez* parameter.
+        .. versionadded:: TBD
+            The *force_zorder* parameter.
         """
 
         if rect is None:
@@ -85,6 +92,7 @@ class Axes3D(Axes):
         self.initial_azim = azim
         self.initial_elev = elev
         self.set_proj_type(proj_type)
+        self.force_zorder = force_zorder
 
         self.xy_viewLim = Bbox.unit()
         self.zz_viewLim = Bbox.unit()
@@ -300,20 +308,26 @@ class Axes3D(Axes):
         renderer.eye = self.eye
         renderer.get_axis_position = self.get_axis_position
 
-        # Calculate projection of collections and patches and zorder them.
-        # Make sure they are drawn above the grids.
-        zorder_offset = max(axis.get_zorder()
-                            for axis in self._get_axis_list()) + 1
-        for i, col in enumerate(
-                sorted(self.collections,
-                       key=lambda col: col.do_3d_projection(renderer),
-                       reverse=True)):
-            col.zorder = zorder_offset + i
-        for i, patch in enumerate(
-                sorted(self.patches,
-                       key=lambda patch: patch.do_3d_projection(renderer),
-                       reverse=True)):
-            patch.zorder = zorder_offset + i
+        if self.force_zorder:
+            for col in self.collections:
+                col.do_3d_projection(renderer)
+            for patch in self.patches:
+                patch.do_3d_projection(renderer)
+        else:
+            # Calculate projection of collections and patches and zorder them.
+            # Make sure they are drawn above the grids.
+            zorder_offset = max(axis.get_zorder()
+                                for axis in self._get_axis_list()) + 1
+            for i, col in enumerate(
+                    sorted(self.collections,
+                           key=lambda col: col.do_3d_projection(renderer),
+                           reverse=True)):
+                col.zorder = zorder_offset + i
+            for i, patch in enumerate(
+                    sorted(self.patches,
+                           key=lambda patch: patch.do_3d_projection(renderer),
+                           reverse=True)):
+                patch.zorder = zorder_offset + i
 
         if self._axis3don:
             # Draw panes first
